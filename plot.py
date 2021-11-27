@@ -114,8 +114,6 @@ def read_and_plot(options1, config1, warnings):
     if options1.verbose:
         print('dated data:', dated.shape)
 
-    print(df.columns)
-
     if config1['averaging']:
         df = df.groupby(pd.Grouper(key='timestamp', freq=config1['averaging'])).mean()
     if options1.verbose:
@@ -131,7 +129,7 @@ def read_and_plot(options1, config1, warnings):
     ax0.xaxis.set_minor_locator(days_minor)
     ax0.format_xdata = days_format
     ax0.grid(True, which='both')
-    ax0.plot(df['timestamp'], df['temperature'], '-')
+    ax0.plot(df.index, df['temperature'], '-')
     fig0.autofmt_xdate(rotation=60)
     plt.savefig(output0, dpi=200)
     plt.close(fig0)
