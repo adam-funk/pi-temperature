@@ -96,8 +96,8 @@ def read_and_plot(options1, config1, warnings):
     raw_data = read_raw_data(warnings)
     # raw_data is dict epoch timestamp -> temperature
 
-    df = pd.DataFrame.from_dict(raw_data, orient='index', columns=['epoch', 'temperature'])
-    df['timestamp'] = pd.to_datetime(df['epoch'], unit='s')
+    df = pd.DataFrame.from_dict(raw_data, orient='index', columns=['temperature'])
+    df['timestamp'] = pd.to_datetime(df.index, unit='s')
     df['date'] = df['timestamp'].dt.date
 
     if options1.verbose:
