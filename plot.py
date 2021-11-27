@@ -42,11 +42,6 @@ def medianr(x):
     # ignore NaN (blank fields in the CSV
     return round(np.nanmedian(x), 1)
 
-def round_down_date(timestamp):
-    d = datetime.date.fromtimestamp(timestamp)
-    dt = datetime.datetime.combine(d, datetime.time(0, 0, 0))
-    return int(dt.timestamp())
-
 
 def read_raw_data(warnings):
     data_to_use = dict()
@@ -93,9 +88,11 @@ def reverse_days(max_days=None):
 
 
 def read_and_plot(options1, config1, warnings):
-    output_file = '/tmp/zone0-plot-%i.png' % int(time.time())
+    output0 = '/tmp/zone0-plot-%i.png' % int(time.time())
+    output1 = '/tmp/zone0-plot-%i-dated.png' % int(time.time())
+
     if options.verbose:
-        print('output file', output_file)
+        print('output files:', output0, output1)
     raw_data = read_raw_data(warnings)
     # raw_data is dict epoch timestamp -> temperature
 
@@ -116,15 +113,12 @@ def read_and_plot(options1, config1, warnings):
         df = df.groupby(pd.Grouper(key='timestamp', freq=config1['averaging'])).mean()
 
     columns = [min, meanr, medianr, max]
-    date_df = df.groupby('date').agg({'temperature': columns}).rename(
+    dated = df.groupby('date').agg({'temperature': columns}).rename(
         columns={'meanr': 'mean', 'medianr': 'mdn'})
 
     days = dates.DayLocator(interval=1)
     days_minor = dates.HourLocator(byhour=[0, 6, 12, 18])
     days_format = dates.DateFormatter('%d')
-
-    # smoothed plot
-    all_timestamps, all_temperatures = average_data(raw_data, max_days=7, averaging=options1.averaging)
 
     fig0, ax0 = plt.subplots(figsize=FIG_SIZE)
     ax0.xaxis.set_major_locator(days)
@@ -132,12 +126,23 @@ def read_and_plot(options1, config1, warnings):
     ax0.xaxis.set_minor_locator(days_minor)
     ax0.format_xdata = days_format
     ax0.grid(True, which='both')
-    ax0.plot(all_timestamps, all_temperatures, 'b,-'),
-    # autofmt needs to happen after data
+    ax0.plot(df['timestamp'], df['temperature'], '-')
     fig0.autofmt_xdate(rotation=60)
-    plt.savefig(output_file, dpi=200)
+    plt.savefig(output0, dpi=200)
     plt.close(fig0)
-    return output_file
+
+    fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
+    ax1.xaxis.set_major_locator(days)
+    ax1.xaxis.set_major_formatter(days_format)
+    ax0.xaxis.set_minor_locator(days_minor)
+    ax1.format_xdata = days_format
+    ax1.grid(True, which='both')
+    ax1.plot(dated.index, dated['temperature'], '-')
+    fig1.autofmt_xdate(rotation=60)
+    plt.savefig(output1, dpi=200)
+    plt.close(fig1)
+
+    return output0, output1
 
 
 oparser = argparse.ArgumentParser(description="Plotter for CPU temperature",
@@ -160,7 +165,7 @@ with open(options.config_file) as f:
 
 text = [datetime.datetime.now().isoformat(timespec='seconds'), platform.node()]
 
-figure = read_and_plot(options, config, text)
+figure0, figure1 = read_and_plot(options, config, text)
 
 mail = EmailMessage()
 mail.set_charset('utf-8')
@@ -169,12 +174,19 @@ mail['From'] = config['mail_from']
 
 mail['Subject'] = 'CPU temperature %s (averaging %s)' % (platform.node(), config['averaging'])
 
-with open(figure, 'rb') as fp:
-    img_data = fp.read()
+with open(figure0, 'rb') as fp:
+    img_data0 = fp.read()
 
-mail.add_attachment(img_data, maintype='image',
+with open(figure1, 'rb') as fp:
+    img_data1 = fp.read()
+
+mail.add_attachment(img_data0, maintype='image',
                     disposition='inline',
-                    subtype=imghdr.what(None, img_data))
+                    subtype=imghdr.what(None, img_data0))
+
+mail.add_attachment(img_data1, maintype='image',
+                    disposition='inline',
+                    subtype=imghdr.what(None, img_data1))
 
 mail.add_attachment('\n'.join(text).encode('utf-8'),
                     disposition='inline',
