@@ -14,7 +14,7 @@ filtering and ease of grepping.
 * `averaging`: string used as `freq` argument of `pandas.Grouper` for 
    smoothing (averaging) the readings before plotting (can be `null`
    to ignore)
-* `max_days_ago`: ignore log entries older than this(can be `null`
+* `max_days_ago`: ignore log entries older than this (can be `null`
    to ignore)
 
 ## Original idea
