@@ -2,9 +2,18 @@
 Tools for logging and plotting Raspberry Pi CPU temperature, 
 intended for use from cron.
 
-## Required JSON config file
-...
+The syslog entry has `OK` or `ALERT` according as the CPU temperature is
+below or above the specified alert temperature; this allows for logcheck 
+filtering and ease of grepping.
 
+## Required JSON config file
+
+* `alert_temp`: temperature to flag as mentioned above
+* `mail_to`: list of e-mail addresses
+* `mail_from`: e-mail address
+* `averaging` (optional): string used as `freq` argument of `pandas.Grouper` for 
+   smoothing (averaging) the readings before plotting
+* `max_days_ago` (optional): ignore log entries older than this
 
 ## Original idea
 ```
