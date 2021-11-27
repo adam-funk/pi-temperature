@@ -109,15 +109,17 @@ def read_and_plot(options1, config1, warnings):
         if options1.verbose:
             print('cutoff data', df.shape)
 
-    print(df.columns)
-
-    if config1['averaging']:
-        df = df.groupby(pd.Grouper(key='timestamp', freq=config1['averaging'])).mean()
-
     columns = [min, meanr, medianr, max]
     dated = df.groupby('date').agg({'temperature': columns})
     if options1.verbose:
         print('dated data:', dated.shape)
+
+    print(df.columns)
+
+    if config1['averaging']:
+        df = df.groupby(pd.Grouper(key='timestamp', freq=config1['averaging'])).mean()
+    if options1.verbose:
+        print('final data:', df.shape)
 
     days = dates.DayLocator(interval=1)
     days_minor = dates.HourLocator(byhour=[0, 6, 12, 18])
