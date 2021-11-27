@@ -3,5 +3,7 @@
   "mail_to": [
     "me@example.com"
   ],
-  "mail_from": "equipment@example.com"
+  "mail_from": "equipment@example.com",
+  "averaging": "15min",
+  "max_days_ago": 7
 }

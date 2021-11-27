@@ -6,13 +6,13 @@ import json
 import syslog
 import time
 
-source = '/sys/devices/virtual/thermal/thermal_zone0/temp'
+SOURCE = '/sys/devices/virtual/thermal/thermal_zone0/temp'
 upper = 84000
 lower = 0
 
 
 def get_raw_temp():
-    with open(source, 'r') as f:
+    with open(SOURCE, 'r') as f:
         stuff = f.readlines()
     t = int(''.join(stuff).strip())
     return t
@@ -56,7 +56,3 @@ if options.logging:
     syslog.openlog('zone0temp', syslog.LOG_PID)
     syslog.syslog(message)
     syslog.closelog()
-
-
-
-
