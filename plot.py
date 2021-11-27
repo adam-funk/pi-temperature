@@ -101,20 +101,23 @@ def read_and_plot(options1, config1, warnings):
     df['date'] = df['timestamp'].dt.date
 
     if options1.verbose:
-        print(df.shape)
+        print('full data:', df.shape)
 
     if config1['max_days_ago']:
         cutoff_date = datetime.date.today() - datetime.timedelta(days=config1['max_days_ago'])
         df = df[df['date'] >= cutoff_date]
         if options1.verbose:
-            print(df.shape)
+            print('cutoff data', df.shape)
+
+    print(df.columns)
 
     if config1['averaging']:
         df = df.groupby(pd.Grouper(key='timestamp', freq=config1['averaging'])).mean()
 
     columns = [min, meanr, medianr, max]
-    dated = df.groupby('date').agg({'temperature': columns}).rename(
-        columns={'meanr': 'mean', 'medianr': 'mdn'})
+    dated = df.groupby('date').agg({'temperature': columns})
+    if options1.verbose:
+        print('dated data:', dated.shape)
 
     days = dates.DayLocator(interval=1)
     days_minor = dates.HourLocator(byhour=[0, 6, 12, 18])
