@@ -11,9 +11,11 @@ filtering and ease of grepping.
 * `alert_temp`: temperature to flag as mentioned above
 * `mail_to`: list of e-mail addresses
 * `mail_from`: e-mail address
-* `averaging` (optional): string used as `freq` argument of `pandas.Grouper` for 
-   smoothing (averaging) the readings before plotting
-* `max_days_ago` (optional): ignore log entries older than this
+* `averaging`: string used as `freq` argument of `pandas.Grouper` for 
+   smoothing (averaging) the readings before plotting (can be `null`
+   to ignore)
+* `max_days_ago`: ignore log entries older than this(can be `null`
+   to ignore)
 
 ## Original idea
 ```

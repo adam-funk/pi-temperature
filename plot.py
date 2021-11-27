@@ -13,6 +13,8 @@ from email.message import EmailMessage
 
 import matplotlib
 import maya
+import numpy as np
+import pandas as pd
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -28,8 +30,17 @@ data_files = glob.iglob('/var/log/syslog*')
 FIG_SIZE = (7, 3)
 
 # Mar 12 16:30:02 hostname zone0temp[8381]: zone0 temp OK 45.3° [raw 45277 45277]
-log_pattern = re.compile(r'(.{15}).*zone0 temp.* ([\d\.]+)°')
+log_pattern = re.compile(r'(.{15}).*zone0 temp.* ([\d.]+)°')
 
+
+def meanr(x):
+    # ignore NaN (blank fields in the CSV
+    return round(np.nanmean(x), 1)
+
+
+def medianr(x):
+    # ignore NaN (blank fields in the CSV
+    return round(np.nanmedian(x), 1)
 
 def round_down_date(timestamp):
     d = datetime.date.fromtimestamp(timestamp)
@@ -38,9 +49,8 @@ def round_down_date(timestamp):
 
 
 def read_raw_data(warnings):
-    # TODO filter by identifer (col 2)
-    # time -> (temp, hum)
     data_to_use = dict()
+    # epoch time -> temperature (float)
     # collect all the valid data from the files
     for data_file in data_files:
         if data_file.endswith('.gz'):
@@ -70,10 +80,7 @@ def parse_date(log_date):
     maya_date = maya.parse(log_date)
     if maya_date > maya.now():
         maya_date = maya_date.add(years=-1)
-    # year is missing from syslog
-    # dt = datetime.datetime.strptime('2020 ' + log_date, '%Y %b %d %H:%M:%S')
-    # dt = maya_date.datetime().strftime('%Y %b %d %H:%M:%S')
-    # return dt.timestamp()
+    # year is missing from syslog entries but the log entry cannot be in the future
     return maya_date.epoch
 
 
@@ -90,6 +97,27 @@ def read_and_plot(options1, config1, warnings):
     if options.verbose:
         print('output file', output_file)
     raw_data = read_raw_data(warnings)
+    # raw_data is dict epoch timestamp -> temperature
+
+    df = pd.DataFrame.from_dict(raw_data, orient='index', columns=['epoch', 'temperature'])
+    df['timestamp'] = pd.to_datetime(df['epoch'], unit='s')
+    df['date'] = df['timestamp'].dt.date
+
+    if options1.verbose:
+        print(df.shape)
+
+    if config1['max_days_ago']:
+        cutoff_date = datetime.date.today() - datetime.timedelta(days=config1['max_days_ago'])
+        df = df[df['date'] >= cutoff_date]
+        if options1.verbose:
+            print(df.shape)
+
+    if config1['averaging']:
+        df = df.groupby(pd.Grouper(key='timestamp', freq=config1['averaging'])).mean()
+
+    columns = [min, meanr, medianr, max]
+    date_df = df.groupby('date').agg({'temperature': columns}).rename(
+        columns={'meanr': 'mean', 'medianr': 'mdn'})
 
     days = dates.DayLocator(interval=1)
     days_minor = dates.HourLocator(byhour=[0, 6, 12, 18])
@@ -138,8 +166,8 @@ mail = EmailMessage()
 mail.set_charset('utf-8')
 mail['To'] = ', '.join(config['mail_to'])
 mail['From'] = config['mail_from']
-averaging = config['averaging']
-mail['Subject'] = 'CPU temperature %s (averaging %s)' % (platform.node(), averaging)
+
+mail['Subject'] = 'CPU temperature %s (averaging %s)' % (platform.node(), config['averaging'])
 
 with open(figure, 'rb') as fp:
     img_data = fp.read()
