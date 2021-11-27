@@ -1,5 +1,7 @@
 {
   "alert_temp": 50.0,
-  "mail_to": ["me@example.com"],
+  "mail_to": [
+    "me@example.com"
+  ],
   "mail_from": "equipment@example.com"
 }

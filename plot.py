@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import json
 from collections import defaultdict
 from email.message import EmailMessage
 import argparse
@@ -175,7 +175,15 @@ oparser.add_argument("-s", dest="sendmail",
                      default=False, action='store_true',
                      help="pipe to sendmail instead of SMTP to localhost")
 
+oparser.add_argument("-c", dest="config_file",
+                     required=True,
+                     metavar="FILE",
+                     help="JSON config file")
+
 options = oparser.parse_args()
+
+with open(options.config_file) as f:
+    config = json.load(f)
 
 import numpy
 import matplotlib
