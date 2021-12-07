@@ -3,8 +3,8 @@ Tools for logging and plotting Raspberry Pi CPU temperature,
 intended for use from cron.
 
 The syslog entry has `OK` or `ALERT` according as the CPU temperature is
-below or above the specified alert temperature; this allows for logcheck 
-filtering and ease of grepping.
+below or above the specified alert temperature; this makes it easier to 
+grep the syslog and filter logcheck output.
 
 ## Required JSON config file
 
