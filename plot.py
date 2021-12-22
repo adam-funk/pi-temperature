@@ -115,7 +115,7 @@ def read_and_plot(options1, config1, warnings):
         print('dated data:', dated.shape)
 
     if config1['averaging']:
-        df = df.groupby(pd.Grouper(key='timestamp', freq=config1['averaging'])).mean()
+        df = df.groupby(pd.Grouper(key='timestamp', freq=config1['averaging'])).agg({'temperature': columns})
     if options1.verbose:
         print('final data:', df.shape)
 
