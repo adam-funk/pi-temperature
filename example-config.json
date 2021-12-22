@@ -4,6 +4,6 @@
     "me@example.com"
   ],
   "mail_from": "equipment@example.com",
-  "averaging": "15min",
+  "averaging": "60min",
   "max_days_ago": 7
 }
