@@ -145,7 +145,7 @@ def read_and_plot(options1, config1, warnings):
     plt.savefig(output1, dpi=200)
     plt.close(fig1)
 
-    return output0, output1
+    return output0, output1, dated.to_html()
 
 
 oparser = argparse.ArgumentParser(description="Plotter for CPU temperature",
@@ -168,7 +168,7 @@ with open(options.config_file) as f:
 
 text = [datetime.datetime.now().isoformat(timespec='seconds'), platform.node()]
 
-figure0, figure1 = read_and_plot(options, config, text)
+figure0, figure1, table = read_and_plot(options, config, text)
 
 mail = EmailMessage()
 mail.set_charset('utf-8')
@@ -190,6 +190,9 @@ mail.add_attachment(img_data0, maintype='image',
 mail.add_attachment(img_data1, maintype='image',
                     disposition='inline',
                     subtype=imghdr.what(None, img_data1))
+
+mail.add_attachment(table.encode('utf-8'), disposition='inline',
+                    maintype='text', subtype='html')
 
 mail.add_attachment('\n'.join(text).encode('utf-8'),
                     disposition='inline',
