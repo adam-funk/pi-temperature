@@ -9,6 +9,7 @@ import platform
 import re
 import subprocess
 import time
+import warnings
 from email.message import EmailMessage
 
 import matplotlib
@@ -34,13 +35,19 @@ log_pattern = re.compile(r'(.{15}).*zone0 temp.* ([\d.]+)°')
 
 
 def meanr(x):
-    # ignore NaN (blank fields in the CSV
-    return round(np.nanmean(x), 1)
+    # ignore NaN (blank fields in the CSV) and averages over missing times
+    with warnings.catch_warnings():
+        warnings.simplefilter(action='ignore', message='Mean of empty slice')
+        result = round(np.nanmean(x), 1)
+    return result
 
 
 def medianr(x):
-    # ignore NaN (blank fields in the CSV
-    return round(np.nanmedian(x), 1)
+    # ignore NaN (blank fields in the CSV) and averages over missing times
+    with warnings.catch_warnings():
+        warnings.simplefilter(action='ignore', message='Mean of empty slice')
+        result = round(np.nanmedian(x), 1)
+    return result
 
 
 def read_raw_data(warnings):
