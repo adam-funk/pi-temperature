@@ -50,23 +50,23 @@ def medianr(x):
     return result
 
 
-def read_raw_data(warnings):
+def read_raw_data(warnings1):
     data_to_use = dict()
     # epoch time -> temperature (float)
     # collect all the valid data from the files
     for data_file in data_files:
         if data_file.endswith('.gz'):
-            with gzip.open(data_file, 'rt', encoding='utf-8', errors='ignore') as f:
+            with gzip.open(data_file, 'rt', encoding='utf-8-sig', errors='ignore') as f:
                 for line in f.readlines():
-                    process_line(line, data_to_use, warnings)
+                    process_line(line, data_to_use, warnings1)
         else:
-            with open(data_file, 'r') as f:
+            with open(data_file, 'r', encoding='utf-8-sig', errors='ignore') as f:
                 for line in f.readlines():
-                    process_line(line, data_to_use, warnings)
+                    process_line(line, data_to_use, warnings1)
     return data_to_use
 
 
-def process_line(line, data_to_use, warnings):
+def process_line(line, data_to_use, warnings1):
     match = log_pattern.match(line)
     if match:
         epoch = parse_date(match.group(1))
@@ -74,7 +74,7 @@ def process_line(line, data_to_use, warnings):
         if -10 < temp < 150:
             data_to_use[epoch] = temp
         else:
-            warnings.append("Rejected %s" % line)
+            warnings1.append("Rejected %s" % line)
     return
 
 
@@ -94,13 +94,13 @@ def reverse_days(max_days=None):
     return 0
 
 
-def read_and_plot(options1, config1, warnings):
+def read_and_plot(options1, config1, warnings1):
     output0 = '/tmp/zone0-plot-%i.png' % int(time.time())
     output1 = '/tmp/zone0-plot-%i-dated.png' % int(time.time())
 
     if options.verbose:
         print('output files:', output0, output1)
-    raw_data = read_raw_data(warnings)
+    raw_data = read_raw_data(warnings1)
     # raw_data is dict epoch timestamp -> temperature
 
     df = pd.DataFrame.from_dict(raw_data, orient='index', columns=['temperature'])
