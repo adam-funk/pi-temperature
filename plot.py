@@ -11,6 +11,7 @@ import subprocess
 import time
 import warnings
 from email.message import EmailMessage
+from io import BytesIO
 
 import matplotlib
 import maya
@@ -95,11 +96,6 @@ def reverse_days(max_days=None):
 
 
 def read_and_plot(options1, config1, warnings1):
-    output0 = '/tmp/zone0-plot-%i.png' % int(time.time())
-    output1 = '/tmp/zone0-plot-%i-dated.png' % int(time.time())
-
-    if options.verbose:
-        print('output files:', output0, output1)
     raw_data = read_raw_data(warnings1)
     # raw_data is dict epoch timestamp -> temperature
 
@@ -130,6 +126,7 @@ def read_and_plot(options1, config1, warnings1):
     days_minor = dates.HourLocator(byhour=[0, 6, 12, 18])
     days_format = dates.DateFormatter('%d')
 
+    buffer0 = BytesIO()
     fig0, ax0 = plt.subplots(figsize=FIG_SIZE)
     ax0.xaxis.set_major_locator(days)
     ax0.xaxis.set_major_formatter(days_format)
@@ -138,9 +135,10 @@ def read_and_plot(options1, config1, warnings1):
     ax0.grid(True, which='both')
     ax0.plot(df.index, df['temperature'], '-')
     fig0.autofmt_xdate(rotation=60)
-    plt.savefig(output0, dpi=200)
+    plt.savefig(buffer0, dpi=200, format='png')
     plt.close(fig0)
 
+    buffer1 = BytesIO()
     fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
     ax1.xaxis.set_major_locator(days)
     ax1.xaxis.set_major_formatter(days_format)
@@ -149,10 +147,10 @@ def read_and_plot(options1, config1, warnings1):
     ax1.grid(True, which='both')
     ax1.plot(dated.index, dated['temperature'], '-')
     fig1.autofmt_xdate(rotation=60)
-    plt.savefig(output1, dpi=200)
+    plt.savefig(buffer1, dpi=200, format='png')
     plt.close(fig1)
 
-    return output0, output1, dated.to_html()
+    return buffer0, buffer1, dated.to_html()
 
 
 oparser = argparse.ArgumentParser(description="Plotter for CPU temperature",
@@ -175,7 +173,7 @@ with open(options.config_file) as f:
 
 text = [datetime.datetime.now().isoformat(timespec='seconds'), platform.node()]
 
-figure0, figure1, table = read_and_plot(options, config, text)
+buffer_0, buffer_1, table = read_and_plot(options, config, text)
 
 mail = EmailMessage()
 mail.set_charset('utf-8')
@@ -184,11 +182,11 @@ mail['From'] = config['mail_from']
 
 mail['Subject'] = 'CPU temperature %s (averaging %s)' % (platform.node(), config['averaging'])
 
-with open(figure0, 'rb') as fp:
-    img_data0 = fp.read()
+buffer_0.seek(0)
+img_data0 = buffer_0.read()
 
-with open(figure1, 'rb') as fp:
-    img_data1 = fp.read()
+buffer_1.seek(0)
+img_data1 = buffer_1.read()
 
 mail.add_attachment(img_data0, maintype='image',
                     disposition='inline',
