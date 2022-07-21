@@ -8,7 +8,6 @@ import json
 import platform
 import re
 import subprocess
-import time
 import warnings
 from email.message import EmailMessage
 from io import BytesIO
@@ -51,11 +50,13 @@ def medianr(x):
     return result
 
 
-def read_raw_data(warnings1):
+def read_raw_data(warnings1, options1):
     data_to_use = dict()
     # epoch time -> temperature (float)
     # collect all the valid data from the files
     for data_file in data_files:
+        if options1.verbose:
+            print('Reading', data_file)
         if data_file.endswith('.gz'):
             with gzip.open(data_file, 'rt', encoding='utf-8-sig', errors='ignore') as f:
                 for line in f.readlines():
@@ -96,8 +97,8 @@ def reverse_days(max_days=None):
 
 
 def read_and_plot(options1, config1, warnings1):
-    raw_data = read_raw_data(warnings1)
-    # raw_data is dict epoch timestamp -> temperature
+    raw_data = read_raw_data(warnings1, options1)
+    # raw_data is dict: epoch timestamp -> temperature
 
     df = pd.DataFrame.from_dict(raw_data, orient='index', columns=['temperature'])
     df['timestamp'] = pd.to_datetime(df.index, unit='s')
@@ -105,6 +106,8 @@ def read_and_plot(options1, config1, warnings1):
 
     if options1.verbose:
         print('full data:', df.shape)
+        print(df['timestamp'].min(), df['timestamp'].min())
+        print(df['date'].min(), df['date'].min())
 
     if config1['max_days_ago']:
         cutoff_date = datetime.date.today() - datetime.timedelta(days=config1['max_days_ago'])
