@@ -135,6 +135,7 @@ def read_and_plot(options1, config1, warnings1):
     ax0.xaxis.set_major_formatter(days_format)
     ax0.xaxis.set_minor_locator(days_minor)
     ax0.format_xdata = days_format
+    ax0.grid(True, which='major', color='gray')
     ax0.grid(True, which='both')
     ax0.plot(df.index, df['temperature'], '-')
     fig0.autofmt_xdate(rotation=60)
@@ -145,9 +146,8 @@ def read_and_plot(options1, config1, warnings1):
     fig1, ax1 = plt.subplots(figsize=FIG_SIZE)
     ax1.xaxis.set_major_locator(days)
     ax1.xaxis.set_major_formatter(days_format)
-    ax0.xaxis.set_minor_locator(days_minor)
     ax1.format_xdata = days_format
-    ax1.grid(True, which='both')
+    ax1.grid(True, which='major')
     ax1.plot(dated.index, dated['temperature'], '-')
     fig1.autofmt_xdate(rotation=60)
     plt.savefig(buffer1, dpi=200, format='png')
