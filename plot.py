@@ -136,7 +136,7 @@ def read_and_plot(options1, config1, warnings1):
     ax0.xaxis.set_minor_locator(days_minor)
     ax0.format_xdata = days_format
     ax0.grid(True, which='major', color='gray')
-    ax0.grid(True, which='both')
+    ax0.grid(True, which='minor', color='lightgray')
     ax0.plot(df.index, df['temperature'], '-')
     fig0.autofmt_xdate(rotation=60)
     plt.savefig(buffer0, dpi=200, format='png')
