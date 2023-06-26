@@ -206,4 +206,4 @@ mail.add_attachment('\n'.join(text).encode('utf-8'),
                     disposition='inline',
                     maintype='text', subtype='plain')
 
-subprocess.run(["/usr/sbin/sendmail", "-t", "-oi"], input=mail.as_string(), encoding='utf-8')
+subprocess.run(["/usr/sbin/sendmail", "-t", "-oi"], input=mail.as_bytes())
