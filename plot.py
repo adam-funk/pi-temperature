@@ -2,7 +2,7 @@
 import argparse
 import glob
 import gzip
-import imghdr
+import puremagic
 import json
 import platform
 import re
@@ -193,11 +193,11 @@ img_data1 = buffer_1.read()
 
 mail.add_attachment(img_data0, maintype='image',
                     disposition='inline',
-                    subtype=imghdr.what(None, img_data0))
+                    subtype=puremagic.from_string(img_data0))
 
 mail.add_attachment(img_data1, maintype='image',
                     disposition='inline',
-                    subtype=imghdr.what(None, img_data1))
+                    subtype=puremagic.from_string(img_data1))
 
 mail.add_attachment(table.encode('utf-8'), disposition='inline',
                     maintype='text', subtype='html')
