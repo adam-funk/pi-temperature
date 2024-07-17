@@ -191,13 +191,15 @@ img_data0 = buffer_0.read()
 buffer_1.seek(0)
 img_data1 = buffer_1.read()
 
+# puremagic says '.png' rather than 'png'
+
 mail.add_attachment(img_data0, maintype='image',
                     disposition='inline',
-                    subtype=puremagic.from_string(img_data0))
+                    subtype=puremagic.from_string(img_data0)[1:])
 
 mail.add_attachment(img_data1, maintype='image',
                     disposition='inline',
-                    subtype=puremagic.from_string(img_data1))
+                    subtype=puremagic.from_string(img_data1)[1:])
 
 mail.add_attachment(table.encode('utf-8'), disposition='inline',
                     maintype='text', subtype='html')
