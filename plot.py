@@ -31,7 +31,7 @@ FIG_SIZE = (7, 3)
 
 # Mar 12 16:30:02 hostname zone0temp[8381]: zone0 temp OK 45.3° [raw 45277 45277]
 LOG_PATTERN = re.compile(r'(.{15}).*zone0 temp.* ([\d.]+)°')
-TIME_FORMAT='%b %w %H:%M:%S'
+TIME_FORMAT='%b %d %H:%M:%S'
 
 
 def meanr(x):
