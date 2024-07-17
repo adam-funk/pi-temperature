@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import datetime
 import glob
 import gzip
 import imghdr
@@ -11,9 +10,9 @@ import subprocess
 import warnings
 from email.message import EmailMessage
 from io import BytesIO
+from datetime import datetime, timedelta, date, time
 
 import matplotlib
-import maya
 import numpy as np
 import pandas as pd
 
@@ -31,7 +30,8 @@ data_files = glob.iglob('/var/log/syslog*')
 FIG_SIZE = (7, 3)
 
 # Mar 12 16:30:02 hostname zone0temp[8381]: zone0 temp OK 45.3° [raw 45277 45277]
-log_pattern = re.compile(r'(.{15}).*zone0 temp.* ([\d.]+)°')
+LOG_PATTERN = re.compile(r'(.{15}).*zone0 temp.* ([\d.]+)°')
+TIME_FORMAT='%b %w %H:%M:%S'
 
 
 def meanr(x):
@@ -69,7 +69,7 @@ def read_raw_data(warnings1, options1):
 
 
 def process_line(line, data_to_use, warnings1):
-    match = log_pattern.match(line)
+    match = LOG_PATTERN.match(line)
     if match:
         epoch = parse_date(match.group(1))
         temp = float(match.group(2))
@@ -80,19 +80,19 @@ def process_line(line, data_to_use, warnings1):
     return
 
 
-def parse_date(log_date):
-    maya_date = maya.parse(log_date)
-    if maya_date > maya.now():
-        maya_date = maya_date.add(years=-1)
+def parse_date(log_date_str: str) -> int:
+    log_date = datetime.strptime(log_date_str, TIME_FORMAT)
+    log_date = log_date.replace(year=datetime.now().year)
+    if log_date > datetime.now():
+        log_date = log_date - timedelta(years=1)
     # year is missing from syslog entries but the log entry cannot be in the future
-    return maya_date.epoch
+    return round(log_date.timestamp())
 
 
 def reverse_days(max_days=None):
     if max_days:
-        backdate = (datetime.date.today() - datetime.timedelta(days=max_days))
-        return int(datetime.datetime.combine(backdate,
-                                             datetime.time(0, 0, 0)).timestamp())
+        backdate = (date.today() - timedelta(days=max_days))
+        return int(datetime.combine(backdate, time(0, 0, 0)).timestamp())
     return 0
 
 
@@ -110,7 +110,7 @@ def read_and_plot(options1, config1, warnings1):
         print(df['date'].min(), df['date'].min())
 
     if config1['max_days_ago']:
-        cutoff_date = datetime.date.today() - datetime.timedelta(days=config1['max_days_ago'])
+        cutoff_date = date.today() - timedelta(days=config1['max_days_ago'])
         df = df[df['date'] >= cutoff_date]
         if options1.verbose:
             print('cutoff data', df.shape)
@@ -174,7 +174,7 @@ options = oparser.parse_args()
 with open(options.config_file) as f:
     config = json.load(f)
 
-text = [datetime.datetime.now().isoformat(timespec='seconds'), platform.node()]
+text = [datetime.now().isoformat(timespec='seconds'), platform.node()]
 
 buffer_0, buffer_1, table = read_and_plot(options, config, text)
 
