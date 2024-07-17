@@ -84,7 +84,7 @@ def parse_date(log_date_str: str) -> int:
     log_date = datetime.strptime(log_date_str, TIME_FORMAT)
     log_date = log_date.replace(year=datetime.now().year)
     if log_date > datetime.now():
-        log_date = log_date - timedelta(years=1)
+        log_date = log_date.replace(year=datetime.now().year - 1)
     # year is missing from syslog entries but the log entry cannot be in the future
     return round(log_date.timestamp())
 
