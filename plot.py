@@ -129,7 +129,7 @@ def read_and_plot(options1, config1, warnings1):
         if options1.verbose:
             print('cutoff data', df.shape)
 
-    columns = [min, meanr, medianr, max]
+    columns = ['min', meanr, medianr, 'max']
     dated = df.groupby('date').agg({'temperature': columns}).rename(columns={'meanr': 'mean', 'medianr': 'mdn'})
     if options1.verbose:
         print('dated data:', dated.shape)
