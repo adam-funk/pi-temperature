@@ -28,11 +28,17 @@ from matplotlib import dates
 data_files = glob.iglob('/var/log/syslog*')
 FIG_SIZE = (7, 3)
 
-# Mar 12 16:30:02 hostname zone0temp[8381]: zone0 temp OK 45.3° [raw 45277 45277]
-LOG_PATTERN = re.compile(r'(.{15}).*zone0 temp.* ([\d.]+)°')
-TIME_FORMAT='%b %d %H:%M:%S'
+# Two syslog formats:
+# Oct  1 15:20:05 deadly zone0temp[21414]: zone0 temp OK 50.0° [raw 50306 49768]
+# 2024-10-01T15:40:04.446169+01:00 deadly zone0temp[30563]: zone0 temp OK 51.9° [raw 51920 51920]
+
+LOG_PATTERN_OLD = re.compile(r'(.{15}) \S+ zone0 temp.* ([\d.]+)°')
+LOG_PATTERN_NEW = re.compile(r'([\d\-:T]{19})[\d.+:]+ \S+ zone0 temp.* ([\d.]+)°')
+TIME_FORMAT_OLD = '%b %d %H:%M:%S'
+TIME_FORMAT_NEW = '%Y-%m-%dT%H:%M:%S'
 
 IMG_TYPE = 'png'
+
 
 def meanr(x):
     # ignore NaN (blank fields in the CSV) and averages over missing times
@@ -50,7 +56,7 @@ def medianr(x):
     return result
 
 
-def read_raw_data(warnings1, options1):
+def read_raw_data(warnings1, options1, min_temp, max_temp):
     data_to_use = dict()
     # epoch time -> temperature (float)
     # collect all the valid data from the files
@@ -58,30 +64,38 @@ def read_raw_data(warnings1, options1):
         if options1.verbose:
             print('Reading', data_file)
         if data_file.endswith('.gz'):
-            with gzip.open(data_file, 'rt', encoding='utf-8-sig', errors='ignore') as f:
-                for line in f.readlines():
-                    process_line(line, data_to_use, warnings1)
+            with gzip.open(data_file, 'rt', encoding='utf-8-sig', errors='ignore') as f0:
+                for line in f0.readlines():
+                    process_line(line, data_to_use, warnings1, min_temp, max_temp)
         else:
-            with open(data_file, 'r', encoding='utf-8-sig', errors='ignore') as f:
-                for line in f.readlines():
-                    process_line(line, data_to_use, warnings1)
+            with open(data_file, 'r', encoding='utf-8-sig', errors='ignore') as f0:
+                for line in f0.readlines():
+                    process_line(line, data_to_use, warnings1, min_temp, max_temp)
     return data_to_use
 
 
-def process_line(line, data_to_use, warnings1):
-    match = LOG_PATTERN.match(line)
-    if match:
-        epoch = parse_date(match.group(1))
-        temp = float(match.group(2))
-        if -10 < temp < 150:
+def process_line(line, data_to_use, warnings1, min_temp, max_temp):
+    match_new = LOG_PATTERN_NEW.match(line)
+    match_old = LOG_PATTERN_OLD.match(line)
+    if match_new:
+        epoch = parse_date(match_new.group(1), TIME_FORMAT_NEW)
+        temp = float(match_new.group(2))
+        if min_temp < temp < max_temp:
+            data_to_use[epoch] = temp
+        else:
+            warnings1.append("Rejected %s" % line)
+    elif match_old:
+        epoch = parse_date(match_old.group(1), TIME_FORMAT_OLD)
+        temp = float(match_old.group(2))
+        if min_temp < temp < max_temp:
             data_to_use[epoch] = temp
         else:
             warnings1.append("Rejected %s" % line)
     return
 
 
-def parse_date(log_date_str: str) -> int:
-    log_date = datetime.strptime(log_date_str, TIME_FORMAT)
+def parse_date(log_date_str: str, time_format: str) -> int:
+    log_date = datetime.strptime(log_date_str, time_format)
     log_date = log_date.replace(year=datetime.now().year)
     if log_date > datetime.now():
         log_date = log_date.replace(year=datetime.now().year - 1)
@@ -97,7 +111,7 @@ def reverse_days(max_days=None):
 
 
 def read_and_plot(options1, config1, warnings1):
-    raw_data = read_raw_data(warnings1, options1)
+    raw_data = read_raw_data(warnings1, options1, config1['min_temp'], config1['max_temp'])
     # raw_data is dict: epoch timestamp -> temperature
 
     df = pd.DataFrame.from_dict(raw_data, orient='index', columns=['temperature'])

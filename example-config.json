@@ -5,5 +5,7 @@
   ],
   "mail_from": "equipment@example.com",
   "averaging": "60min",
-  "max_days_ago": 7
+  "max_days_ago": 7,
+  "min_temp": -20.0,
+  "max_temp": 150.0
 }
