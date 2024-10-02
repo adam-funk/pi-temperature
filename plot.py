@@ -32,8 +32,8 @@ FIG_SIZE = (7, 3)
 # Oct  1 15:20:05 deadly zone0temp[21414]: zone0 temp OK 50.0° [raw 50306 49768]
 # 2024-10-01T15:40:04.446169+01:00 deadly zone0temp[30563]: zone0 temp OK 51.9° [raw 51920 51920]
 
-LOG_PATTERN_OLD = re.compile(r'(.{15}) \S+ zone0 temp.* ([\d.]+)°')
-LOG_PATTERN_NEW = re.compile(r'([\d\-:T]{19})[\d.+:]+ \S+ zone0 temp.* ([\d.]+)°')
+LOG_PATTERN_OLD = re.compile(r'(.{15}) \S+ zone0temp.* ([\d.]+)°')
+LOG_PATTERN_NEW = re.compile(r'([\d\-:T]{19})[\d.+:]+ \S+ zone0temp.* ([\d.]+)°')
 TIME_FORMAT_OLD = '%b %d %H:%M:%S'
 TIME_FORMAT_NEW = '%Y-%m-%dT%H:%M:%S'
 
@@ -80,14 +80,14 @@ def process_line(line, data_to_use, warnings1, min_temp, max_temp):
     if match_new:
         epoch = parse_date(match_new.group(1), TIME_FORMAT_NEW)
         temp = float(match_new.group(2))
-        if min_temp < temp < max_temp:
+        if min_temp <= temp <= max_temp:
             data_to_use[epoch] = temp
         else:
             warnings1.append("Rejected %s" % line)
     elif match_old:
         epoch = parse_date(match_old.group(1), TIME_FORMAT_OLD)
         temp = float(match_old.group(2))
-        if min_temp < temp < max_temp:
+        if min_temp <= temp <= max_temp:
             data_to_use[epoch] = temp
         else:
             warnings1.append("Rejected %s" % line)
@@ -120,8 +120,8 @@ def read_and_plot(options1, config1, warnings1):
 
     if options1.verbose:
         print('full data:', df.shape)
-        print(df['timestamp'].min(), df['timestamp'].min())
-        print(df['date'].min(), df['date'].min())
+        print(df['timestamp'].min(), df['timestamp'].max())
+        print(df['date'].min(), df['date'].max())
 
     if config1['max_days_ago']:
         cutoff_date = date.today() - timedelta(days=config1['max_days_ago'])
