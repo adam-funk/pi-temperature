@@ -2,7 +2,6 @@
 import argparse
 import glob
 import gzip
-import puremagic
 import json
 import platform
 import re
@@ -33,6 +32,7 @@ FIG_SIZE = (7, 3)
 LOG_PATTERN = re.compile(r'(.{15}).*zone0 temp.* ([\d.]+)°')
 TIME_FORMAT='%b %d %H:%M:%S'
 
+IMG_TYPE = 'png'
 
 def meanr(x):
     # ignore NaN (blank fields in the CSV) and averages over missing times
@@ -139,7 +139,7 @@ def read_and_plot(options1, config1, warnings1):
     ax0.grid(True, which='minor', color='lightgray')
     ax0.plot(df.index, df['temperature'], '-')
     fig0.autofmt_xdate(rotation=60)
-    plt.savefig(buffer0, dpi=200, format='png')
+    plt.savefig(buffer0, dpi=200, format=IMG_TYPE)
     plt.close(fig0)
 
     buffer1 = BytesIO()
@@ -150,7 +150,7 @@ def read_and_plot(options1, config1, warnings1):
     ax1.grid(True, which='major')
     ax1.plot(dated.index, dated['temperature'], '-')
     fig1.autofmt_xdate(rotation=60)
-    plt.savefig(buffer1, dpi=200, format='png')
+    plt.savefig(buffer1, dpi=200, format=IMG_TYPE)
     plt.close(fig1)
 
     return buffer0, buffer1, dated.to_html()
@@ -195,11 +195,11 @@ img_data1 = buffer_1.read()
 
 mail.add_attachment(img_data0, maintype='image',
                     disposition='inline',
-                    subtype=puremagic.from_string(img_data0)[1:])
+                    subtype=IMG_TYPE)
 
 mail.add_attachment(img_data1, maintype='image',
                     disposition='inline',
-                    subtype=puremagic.from_string(img_data1)[1:])
+                    subtype=IMG_TYPE)
 
 mail.add_attachment(table.encode('utf-8'), disposition='inline',
                     maintype='text', subtype='html')
